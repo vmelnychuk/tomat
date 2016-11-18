@@ -1,97 +1,69 @@
 package tomat.core;
 
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
-import java.util.StringJoiner;
+import tomat.util.TimeUtil;
 
-public class Pomodoro {
+import java.time.LocalDateTime;
+import java.util.Optional;
+
+public final class Pomodoro {
+    private final String title;
+    private final String comment;
     private State state;
-    private String title;
-    private String comment;
-    private LocalDateTime creationDate;
-    private LocalDateTime startTime;
-    private LocalDateTime expectedFinishTime;
-    private LocalDateTime realFinishTime;
+    private final LocalDateTime creationDate;
+    private Optional<LocalDateTime> startTime = Optional.empty();
+    private Optional<LocalDateTime> expectedFinishTime = Optional.empty();
+    private Optional<LocalDateTime> finishTime = Optional.empty();
+    private long minutesWorked = 0;
+
+    public Pomodoro(String title,
+                    String comment) {
+        this.creationDate = LocalDateTime.now();
+        this.title = title;
+        this.comment = comment;
+        this.state = State.to_do;
+    }
 
     public Pomodoro(LocalDateTime creationDate,
                     String title,
                     String comment) {
-
+        this.creationDate = creationDate;
+        this.title = title;
+        this.comment = comment;
         this.state = State.to_do;
-        this.creationDate = creationDate;
-        this.title = title;
-        this.comment = comment;
-    }
-
-    public State getState() {
-        return state;
-    }
-
-    public void setState(State state) {
-        this.state = state;
-    }
-
-    public LocalDateTime getCreationDate() {
-        return creationDate;
-    }
-
-    public void setCreationDate(LocalDateTime creationDate) {
-        this.creationDate = creationDate;
-    }
-
-    public LocalDateTime getStartTime() {
-        return startTime;
-    }
-
-    public void setStartTime(LocalDateTime startTime) {
-        this.startTime = startTime;
-    }
-
-    public LocalDateTime getExpectedFinishTime() {
-        return expectedFinishTime;
-    }
-
-    public void setExpectedFinishTime(LocalDateTime expectedFinishTime) {
-        this.expectedFinishTime = expectedFinishTime;
-    }
-
-    public LocalDateTime getRealFinishTime() {
-        return realFinishTime;
-    }
-
-    public void setRealFinishTime(LocalDateTime realFinishTime) {
-        this.realFinishTime = realFinishTime;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public String getComment() {
-        return comment;
-    }
-
-    public void setComment(String comment) {
-        this.comment = comment;
     }
 
     public void start() {
         this.state = State.in_progress;
-        this.startTime = LocalDateTime.now();
-        this.expectedFinishTime = this.startTime.plusMinutes(Settings.pomodoro_time);
+        this.startTime = Optional.of(LocalDateTime.now());
+        this.expectedFinishTime = Optional.of(TimeUtil.getPomodoroEndTime(startTime.get()));
+    }
+
+    public void interrupt() {
+        this.state = State.interrupted;
+        this.finishTime = Optional.of(LocalDateTime.now());
+        this.minutesWorked = TimeUtil.minutesBetween(startTime.get(), finishTime.get());
+    }
+
+    public void stop() {
+        this.state = State.done;
+        this.finishTime = Optional.of(LocalDateTime.now());
+        this.minutesWorked = TimeUtil.minutesBetween(startTime.get(), finishTime.get());
+    }
+
+    private long remainingTime() {
+        return TimeUtil.minutesBetween(startTime.get(), expectedFinishTime.get());
     }
 
     public String printState() {
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append("Title: " + title + "\n")
-                     .append("Comment: " + comment + "\n")
-                     .append("Start time: " + startTime.toString() + "\n")
-                     .append("End time: " + expectedFinishTime.toString() + "\n")
-                     .append("Remaining time: " + ChronoUnit.MINUTES.between(startTime, expectedFinishTime) + "\n");
+                     .append("Comment: " + comment + "\n");
+        if (startTime.isPresent()) {
+            stringBuilder = stringBuilder.append("Start time: " + startTime.map(LocalDateTime::toString).orElse("") + "\n");
+        }
+        if (finishTime.isPresent()) {
+             stringBuilder = stringBuilder.append("End time: " + finishTime.map(LocalDateTime::toString).orElse("") + "\n");
+        }
         return stringBuilder.toString();
     }
 }

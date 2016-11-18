@@ -9,7 +9,9 @@ public class Main {
         Pomodoro pomodoro = new Pomodoro(LocalDateTime.now(), "first task", "first comment");
         System.out.println("Hello, tomat!");
         pomodoro.start();
-        String state = pomodoro.printState();
-        System.out.println(state);
+        System.out.println(pomodoro.printState());
+        pomodoro.interrupt();
+        pomodoro.stop();
+        System.out.println(pomodoro.printState());
     }
 }

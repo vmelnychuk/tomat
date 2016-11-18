@@ -1,4 +1,4 @@
-package tomat.core;
+package tomat.enviroment;
 
 public class Settings {
     public static int pomodoro_time = 25;
